@@ -162,7 +162,6 @@ model <- make.lp(0, 42)
 
 set.bounds(model, lower = c(rep(0,16),rep(0,16),rep(0,10)))
 set.type(model, columns=33:42, type='binary')
-get.type(model)
 # set.semicont(model, 17:32)
 
 prices <- c(2,2,
@@ -241,35 +240,41 @@ add.constraint(model, rep(1,4),">=", 715, c(c(9,10),c(9,10)+16))
 
 # Q3 constraints
 add.constraint(model, rep(1,4),">=", 455, c(c(4,5),c(4,5)+16))
-add.constraint(model, rep(1,6),">=", 845, c(c(11,12,13),c(11,12,13)+16))
+add.constraint(model, rep(1,6),">=", 845, c(c(11,12,14),c(11,12,14)+16)) #13 (bc34) is allocated for Q4; variable 14 is the correct index (bc43).
 
 # Q4 constraints
 add.constraint(model, rep(1,4),">=", 350, c(c(6,7),c(6,7)+16))
-add.constraint(model, rep(1,6),">=", 650, c(c(14,15,16),c(14,15,16)+16))
+add.constraint(model, rep(1,6),">=", 650, c(c(13,15,16),c(13,15,16)+16)) #13 bc34 14 bc43
 
 solve(model)
 
-print(sum(get.variables(model)[1:2]))
-print(sum(get.variables(model)[3]))
-print(sum(get.variables(model)[4]))
-print(sum(get.variables(model)[5:6]))
-print(sum(get.variables(model)[7]))
+deliveries <- c(1200, 1100, 1300, 1000)
+required_fuel <- deliveries*0.35
+print(required_fuel)
+required_corn <- deliveries*0.65
 
-print(sum(get.variables(model)[8:9]))
-print(sum(get.variables(model)[10:11]))
-print(sum(get.variables(model)[12:13]))
-print(sum(get.variables(model)[14:15]))
-print(sum(get.variables(model)[16]))
+print(paste("Fuel January:", sum(get.variables(model)[c(1:2,17:18)])))
+print(paste("Fuel March:",sum(get.variables(model)[c(3,19)])))
+print(paste("Fuel May:",sum(get.variables(model)[c(4,20)])))
+print(paste("Fuel July:",sum(get.variables(model)[c(5:6,21:22)])))
+print(paste("Fuel September:",sum(get.variables(model)[c(7,23)])))
 
-print(sum(get.variables(model)[c(1,8)]))
-print(sum(get.variables(model)[c(2,3,9,10)]))
-print(sum(get.variables(model)[c(4,5,11,12,13)]))
-print(sum(get.variables(model)[c(6,7,14,15,16)]))
+print(required_corn)
+print(paste("Corn January:",sum(get.variables(model)[c(8:9,24:25)])))
+print(paste("Corn March:",sum(get.variables(model)[c(10:11,26:27)])))
+print(paste("Corn May:",sum(get.variables(model)[c(12:13,28:29)])))
+print(paste("Corn July:",sum(get.variables(model)[c(14:15,30:31)])))
+print(paste("Corn September:",sum(get.variables(model)[c(16,32)])))
 
-get.variables(model)[1:16]
-get.variables(model)[17:32]
-get.variables(model)[33:42]
-get.objective(model)
+#print(sum(get.variables(model)[c(1,8)]))
+#print(sum(get.variables(model)[c(2,3,9,10)]))
+#print(sum(get.variables(model)[c(4,5,11,12,13)]))
+#print(sum(get.variables(model)[c(6,7,14,15,16)]))
+#
+#get.variables(model)[1:16]
+#get.variables(model)[17:32]
+#get.variables(model)[33:42]
+print(get.objective(model))
 
 ```
 
