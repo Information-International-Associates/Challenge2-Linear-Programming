@@ -122,50 +122,130 @@ bc34 + bc44 + bc54 = 650
 14 bc43
 15 bc44
 16 bc54
+17 disc_bf11
+18 disc_bf12
+19 disc_bf22
+20 disc_bf33
+21 disc_bf43
+22 disc_bf44
+23 disc_bf54
+24 disc_bc11
+25 disc_bc12
+26 disc_bc22
+27 disc_bc23
+28 disc_bc33
+29 disc_bc34
+30 disc_bc43
+31 disc_bc44
+32 disc_bc54
+33 bf1_isdiscount
+34 bf2_isdiscount
+35 bf3_isdiscount
+36 bf4_isdiscount
+37 bf5_isdiscount
+38 bc1_isdiscount
+39 bc2_isdiscount
+40 bc3_isdiscount
+41 bc4_isdiscount
+42 bc5_isdiscount
 
+# what we have now
 2 (bf11 + bf12) + 2.5 bf22 + 2 bf33 + 1 (bf43 + bf44) + 1.5 (bf54) +
-1.5 (bc11 + bc12) + 1(bc22 + bc23) + 2 (bc33 + bc34) + 1 (bc43 + bc44) + 2 (bc54)
+1.5 (bc11 + bc12) + 1(bc22 + bc23) + 2 (bc33 + bc34) + 1 (bc43 + bc44) + 2 (bc54) +
+(2 (disc_bf11 + disc_bf12) + 2.5 (disc_bf22) + 2 disc_bf33 + 1 (disc_bf43 + disc_bf44) + 1.5 (disc_bf54) +
+1.5 (disc_bc11 + disc_bc12) + 1(disc_bc22 + disc_bc23) + 2 (disc_bc33 + disc_bc34) + 1 (disc_bc43 + disc_bc44) + 2 (disc_bc54)) * 0.75
 
 ```{r}
 library(lpSolveAPI)
 
-model <- make.lp(0, 16)
+model <- make.lp(0, 42)
 
-set.bounds(model, lower = rep(0,16))
+set.bounds(model, lower = c(rep(0,16),rep(0,16),rep(0,10)))
+set.type(model, columns=33:42, type='binary')
+get.type(model)
+# set.semicont(model, 17:32)
 
-set.objfn(model, c(2,2,
+prices <- c(2,2,
                    2.5,
                    2,
                    1,1,
                    1.5,
-                   
                    1.5,1.5,
                    1,1,
                    2,2,
                    1,1,
-                   2))
+                   2                   
+            )
 
-add.constraint(model, c(1,1,-3,-3),"<=", 0, c(1,2,8,9))
-add.constraint(model, c(1,-3,-3),"<=", 0, c(3,10,11))
-add.constraint(model, c(1,-3,-3),"<=", 0, c(4,12,13))
-add.constraint(model, c(1,1,-3,-3),"<=", 0, c(5,6,14,15))
-add.constraint(model, c(1,-3),"<=", 0, c(7,16))
+set.objfn(model, c(prices,.75*prices, rep(0,10)))
+high_negative <- -10000000
+#constraints for binary "isdiscount"
+# (fuel buy P1)  - 1000 * isdisounct_bf1 >= 0
+# discount constraints for fuel buy periods
+add.constraint(model, c(1,1,-1000),">=", 0, c(17,18,33))
+add.constraint(model, c(1,1,high_negative),"<=", 0, c(17,18,33))
+
+add.constraint(model, c(1,-1000),">=", 0, c(19,34))
+add.constraint(model, c(1,high_negative),"<=", 0, c(19,34))
+
+add.constraint(model, c(1,-1000),">=", 0, c(20,35))
+add.constraint(model, c(1,high_negative),"<=", 0, c(20,35))
+
+add.constraint(model, c(1,1,-1000),">=", 0, c(21,22,36))
+add.constraint(model, c(1,1,high_negative),"<=", 0, c(21,22,36))
+
+add.constraint(model, c(1,-1000),">=", 0, c(23,37))
+add.constraint(model, c(1,high_negative),"<=", 0, c(23,37))
+
+# discount constraints for corn buy periods
+add.constraint(model, c(1,1,-1000),">=", 0, c(24,25,38))
+add.constraint(model, c(1,1,high_negative),"<=", 0, c(24,25,38))
+
+add.constraint(model, c(1,1,-1000),">=", 0, c(26,27,39))
+add.constraint(model, c(1,1,high_negative),"<=", 0, c(26,27,39))
+
+add.constraint(model, c(1,1,-1000),">=", 0, c(28,29,40))
+add.constraint(model, c(1,1,high_negative),"<=", 0, c(28,29,40))
+
+add.constraint(model, c(1,1,-1000),">=", 0, c(30,31,41))
+add.constraint(model, c(1,1,high_negative),"<=", 0, c(30,31,41))
+
+add.constraint(model, c(1,-1000),">=", 0, c(32,42))
+add.constraint(model, c(1,high_negative),"<=", 0, c(32,42))
+
+add.constraint(model, rep(c(1,1,-3,-3),2),"<=", 0, c(1,2,8,9,17,18,24,25))
+add.constraint(model, rep(c(1,-3,-3),2),"<=", 0, c(c(3,10,11),c(3,10,11)+16))
+add.constraint(model, rep(c(1,-3,-3),2),"<=", 0, c(c(4,12,13),c(4,12,13)+16))
+add.constraint(model, rep(c(1,1,-3,-3),2),"<=", 0, c(c(5,6,14,15),c(5,6,14,15)+16))
+add.constraint(model, rep(c(1,-3),2),"<=", 0, c(c(7,16),c(7,16)+16))
+
+#add.constraint(model, rep(1,2),">=", 1000, c(17,18))
+#add.constraint(model, c(1),">=", 1000, c(19))
+#add.constraint(model, c(1),">=", 1000, c(4)+16)
+#add.constraint(model, c(1,1),">=", 1000, c(5,6)+16)
+#add.constraint(model, c(1),">=", 1000, c(7)+16)
+#
+#add.constraint(model, rep(1,2),">=", 1000, c(8,9)+16)
+#add.constraint(model, rep(1,2),">=", 1000, c(10,11)+16)
+#add.constraint(model, rep(1,2),">=", 1000, c(12,13)+16)
+#add.constraint(model, rep(1,2),">=", 1000, c(14,15)+16)
+#add.constraint(model, c(1),">=", 1000, c(16)+16)
 
 # Q1 constraints
-add.constraint(model, 1,">=", 420, 1)
-add.constraint(model, 1,">=", 780, 8)
+add.constraint(model, rep(1,2),">=", 420, c(1,17))
+add.constraint(model, rep(1,2),">=", 780, c(8,24))
 
 # Q2 constraints
-add.constraint(model, rep(1,2),">=", 385, c(2,3))
-add.constraint(model, rep(1,2),">=", 715, c(9,10))
+add.constraint(model, rep(1,4),">=", 385, c(c(2,3),c(2,3)+16))
+add.constraint(model, rep(1,4),">=", 715, c(c(9,10),c(9,10)+16))
 
 # Q3 constraints
-add.constraint(model, rep(1,2),">=", 455, c(4,5))
-add.constraint(model, rep(1,3),">=", 845, c(11,12,13))
+add.constraint(model, rep(1,4),">=", 455, c(c(4,5),c(4,5)+16))
+add.constraint(model, rep(1,6),">=", 845, c(c(11,12,13),c(11,12,13)+16))
 
 # Q4 constraints
-add.constraint(model, rep(1,2),">=", 350, c(6,7))
-add.constraint(model, rep(1,3),">=", 650, c(14,15,16))
+add.constraint(model, rep(1,4),">=", 350, c(c(6,7),c(6,7)+16))
+add.constraint(model, rep(1,6),">=", 650, c(c(14,15,16),c(14,15,16)+16))
 
 solve(model)
 
@@ -186,6 +266,11 @@ print(sum(get.variables(model)[c(2,3,9,10)]))
 print(sum(get.variables(model)[c(4,5,11,12,13)]))
 print(sum(get.variables(model)[c(6,7,14,15,16)]))
 
+get.variables(model)[1:16]
+get.variables(model)[17:32]
+get.variables(model)[33:42]
 get.objective(model)
 
 ```
+
+25% discount on 1000 tons or more
